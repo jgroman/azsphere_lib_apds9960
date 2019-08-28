@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.779
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib_apds9960", "lib_apds9960\lib_apds9960.vcxproj", "{271E19E0-8F46-4807-9DBE-A75F1B394D7F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Release|ARM = Release|ARM
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{271E19E0-8F46-4807-9DBE-A75F1B394D7F}.Debug|ARM.ActiveCfg = Debug|ARM
+		{271E19E0-8F46-4807-9DBE-A75F1B394D7F}.Debug|ARM.Build.0 = Debug|ARM
+		{271E19E0-8F46-4807-9DBE-A75F1B394D7F}.Release|ARM.ActiveCfg = Release|ARM
+		{271E19E0-8F46-4807-9DBE-A75F1B394D7F}.Release|ARM.Build.0 = Release|ARM
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CF86C76B-470B-48D4-B6F6-A3018C69698D}
+	EndGlobalSection
+EndGlobal

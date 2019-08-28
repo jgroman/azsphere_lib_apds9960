@@ -1,0 +1,15 @@
+{
+  "SchemaVersion": 1,
+  "Name" : "lib_apds9960_example",
+  "ComponentId" : "37ffe65b-065e-4c12-8ec6-880c3fae537d",
+  "EntryPoint": "/bin/app",
+  "CmdArgs": [],
+  "Capabilities": {
+    "AllowedConnections": [],
+    "Gpio": [],
+    "I2cMaster": [ "$PROJECT_ISU2_I2C" ],
+    "Uart": [],
+    "WifiConfig": false
+  },
+  "ApplicationType":"Default"
+}

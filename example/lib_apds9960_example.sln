@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.779
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib_apds9960_example", "lib_apds9960_example\lib_apds9960_example.vcxproj", "{03CA6996-6911-408C-A93A-51D6D6429E4B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lib_apds9960", "..\lib_apds9960\lib_apds9960.vcxproj", "{271E19E0-8F46-4807-9DBE-A75F1B394D7F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Release|ARM = Release|ARM
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{03CA6996-6911-408C-A93A-51D6D6429E4B}.Debug|ARM.ActiveCfg = Debug|ARM
+		{03CA6996-6911-408C-A93A-51D6D6429E4B}.Debug|ARM.Build.0 = Debug|ARM
+		{03CA6996-6911-408C-A93A-51D6D6429E4B}.Release|ARM.ActiveCfg = Release|ARM
+		{03CA6996-6911-408C-A93A-51D6D6429E4B}.Release|ARM.Build.0 = Release|ARM
+		{271E19E0-8F46-4807-9DBE-A75F1B394D7F}.Debug|ARM.ActiveCfg = Debug|ARM
+		{271E19E0-8F46-4807-9DBE-A75F1B394D7F}.Debug|ARM.Build.0 = Debug|ARM
+		{271E19E0-8F46-4807-9DBE-A75F1B394D7F}.Release|ARM.ActiveCfg = Release|ARM
+		{271E19E0-8F46-4807-9DBE-A75F1B394D7F}.Release|ARM.Build.0 = Release|ARM
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DC0BBF60-BEC2-4F3A-B04A-7AD0E2E9B61E}
+	EndGlobalSection
+EndGlobal
