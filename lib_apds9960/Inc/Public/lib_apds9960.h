@@ -17,6 +17,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 #define APDS9960_I2C_ADDRESS    0x39
 
 // APDS9960 Registers
@@ -70,7 +72,288 @@ extern "C" {
 #define APDS9960_GFIFO_L    0xFE    // Gesture FIFO LEFT value
 #define APDS9960_GFIFO_R    0xFF    // Gesture FIFO RIGHT value
 
+// ENABLE Register bitfields
+typedef struct
+{
+    union
+    {
+        struct 
+        {
+            uint8_t PON : 1;    // Power ON
+            uint8_t AEN : 1;    // ALS Enable
+            uint8_t PEN : 1;    // Proximity Detect Enable
+            uint8_t WEN : 1;    // Wait Enable
+            uint8_t AIEN : 1;   // ALS Interrupt Enable
+            uint8_t PIEN : 1;   // Proximity Interrupt Enable
+            uint8_t GEN : 1;    // Gesture Enable
+            uint8_t RSVD7 : 1;  // Reserved. Write as 0.
+        };
+        unsigned char byte;
+    };
+} enable_t;
+enable_t apds9960_reg_enable;   // ENABLE register contents
 
+// PERS Register bitfields
+typedef struct
+{
+    union
+    {
+        struct 
+        {
+            uint8_t APERS : 4;    // ALS Interrupt Persistence
+            uint8_t PPERS : 4;    // Proximity Interrupt Persistence
+        };
+        unsigned char byte;
+    };
+} pers_t;
+pers_t apds9960_reg_pers;   // PERS register contents
+
+// CONFIG1 Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t RSVD0 : 1;
+            uint8_t WLONG : 1;      // Wait Long
+            uint8_t RSVD2 : 6;
+        };
+        unsigned char byte;
+    };
+} config1_t;
+config1_t apds9960_reg_config1; // CONFIG1 register contents
+
+// PPULSE Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t PPULSE : 6;     // Proximity Pulse Count
+            uint8_t PPLEN : 2;      // Proximity Pulse Length
+        };
+        unsigned char byte;
+    };
+} ppulse_t;
+ppulse_t apsd9960_reg_ppulse;   // PPULSE register contents
+
+#define PPULSE_PPLEN_4US   0
+#define PPULSE_PPLEN_8US   1
+#define PPULSE_PPLEN_16US  2
+#define PPULSE_PPLEN_32US  3
+
+// CONTROL Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t AGAIN  : 2; // ALS and Color Gain Control
+            uint8_t PGAIN  : 2; // Proximity Gain Control
+            uint8_t RSVD4  : 1; // Reserved. Write as 0.
+            uint8_t RSVD5  : 1; // Reserved. Write as 0.
+            uint8_t LDRIVE : 2; // LED Drive Strength
+        };
+        unsigned char byte;
+    };
+} control_t;
+control_t apsd9960_reg_control;   // CONTROL register contents
+
+#define CONTROL_AGAIN_1X   0
+#define CONTROL_AGAIN_4X   1
+#define CONTROL_AGAIN_16X  2
+#define CONTROL_AGAIN_64X  3
+
+#define CONTROL_PGAIN_1X   0
+#define CONTROL_PGAIN_2X   1
+#define CONTROL_PGAIN_4X   2
+#define CONTROL_PGAIN_8X   3
+
+#define CONTROL_LDRIVE_100MA 0
+#define CONTROL_LDRIVE_50MA  1
+#define CONTROL_LDRIVE_25MA  2
+#define CONTROL_LDRIVE_12MA  3
+
+// CONFIG2 Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t RSVD0     : 1;  // Reserved. Write as 1.
+            uint8_t RSVD1     : 3;  // Reserved. Write as 0.
+            uint8_t LED_BOOST : 2;  // Additional LDR current
+            uint8_t CPSIEN    : 1;  // Clear Photodiode Saturation Interrupt En
+            uint8_t PSIEN     : 1;  // Proximity Saturation Interrupt Enable
+        };
+        unsigned char byte;
+};
+} config2_t;
+config2_t apds9960_reg_config2; // CONFIG2 register contents
+
+#define CONFIG2_LED_BOOST_100   0   // LED Boost Current 100%
+#define CONFIG2_LED_BOOST_150   1   // LED Boost Current 150%
+#define CONFIG2_LED_BOOST_200   2   // LED Boost Current 200%
+#define CONFIG2_LED_BOOST_300   3   // LED Boost Current 300%
+
+// STATUS Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t AVALID : 1;     // ALS Valid
+            uint8_t PVALID : 1;     // Proximity Valid
+            uint8_t GINT   : 1;     // Gesture Interrupt
+            uint8_t RSVD3  : 1;     
+            uint8_t AINT   : 1;     // ALS Interrupt
+            uint8_t PINT   : 1;     // Proximity Interrupt
+            uint8_t PGSAT  : 1;     // Previous Cycle Analog Saturation Event
+            uint8_t CPSAT  : 1;     // Clear photodiode Saturation
+        };
+        unsigned char byte;
+    };
+} status_t;
+status_t apsd9960_reg_status;   // STATUS register contents
+
+// CONFIG3 Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t PMASK_R : 1;    // Proximity Mask RIGHT Enable
+            uint8_t PMASK_L : 1;    // Proximity Mask LEFT Enable
+            uint8_t PMASK_D : 1;    // Proximity Mask DOWN Enable
+            uint8_t PMASK_U : 1;    // Proximity Mask UP Enable
+            uint8_t SAI     : 1;    // Sleep After Interrupt
+            uint8_t PCMP    : 1;    // Proximity Gain Compensation Enable
+            uint8_t RSVD6   : 2;
+        };
+        unsigned char byte;
+    };
+} config3_t;
+config3_t apds9960_reg_config3; // CONFIG3 register contents
+
+// GCONF1 Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t GEXPERS : 2;    // Gesture Exit Persistence
+            uint8_t GEXMSK  : 4;    // Gesture Exit Mask
+            uint8_t GFIFOTH : 2;    // Gesture FIFO Threshold
+        };
+        unsigned char byte;
+};
+} gconf1_t;
+gconf1_t apds9960_reg_gconf1; // GCONF1 register contents
+
+// GCONF2 Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t GWTIME  : 3;    // Gesture Wait Time
+            uint8_t GLDRIVE : 2;    // Gesture LED Drive Strength
+            uint8_t GGAIN   : 2;    // Gesture Gain Control
+            uint8_t RSVD7   : 1;
+        };
+        unsigned char byte;
+    };
+} gconf2_t;
+gconf2_t apds9960_reg_gconf2; // GCONF2 register contents
+
+#define GCONF2_GWTIME_0MS    0
+#define GCONF2_GWTIME_2MS    1
+#define GCONF2_GWTIME_5MS    2
+#define GCONF2_GWTIME_8MS    3
+#define GCONF2_GWTIME_14MS   4
+#define GCONF2_GWTIME_22MS   5
+#define GCONF2_GWTIME_30MS   6
+#define GCONF2_GWTIME_39MS   7
+
+// GPULSE Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t GPULSE : 6;    // Number of Gesture Pulses
+            uint8_t GPLEN : 2;     // Gesture Pulse Length
+        };
+        unsigned char byte;
+    };
+} gpulse_t;
+gpulse_t apds9960_reg_gpulse; // GPULSE register contents
+
+#define GPULSE_GPLEN_4US   0
+#define GPULSE_GPLEN_8US   1
+#define GPULSE_GPLEN_16US  2
+#define GPULSE_GPLEN_32US  3
+
+// GCONF3 Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t GDIMS : 2;    // Gesture Dimension Select
+            uint8_t RSVD2 : 6;
+        };
+        unsigned char byte;
+    };
+} gconf3_t;
+gconf3_t apds9960_reg_gconf3; // GCONF3 register contents
+
+#define GCONF2_GDIMS_ALL   0
+#define GCONF2_GDIMS_UD    1
+#define GCONF2_GDIMS_LR    2
+
+// GCONF4 Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t GMODE     : 1;    // Gesture Mode
+            uint8_t GIEN      : 1;    // Gesture Interrupt Enable
+            uint8_t GFIFO_CLR : 1;    // Clear GFIFO
+            uint8_t RSVD3     : 5;
+        };
+        unsigned char byte;
+    };
+} gconf4_t;
+gconf4_t apds9960_reg_gconf4; // GCONF4 register contents
+
+// GSTATUS Register bitfields
+typedef struct
+{
+    union
+    {
+        struct
+        {
+            uint8_t GVALID : 1;    // Gesture FIFO Data
+            uint8_t GFOV   : 1;    // Gesture FIFO Overflow
+            uint8_t RSVD2  : 6;
+        };
+        unsigned char byte;
+    };
+} gstatus_t;
+gstatus_t apds9960_reg_gstatus; // GSTATUS register contents
 
 #ifdef __cplusplus
 }
