@@ -19,6 +19,11 @@ extern "C" {
 
 #include <stdint.h>
 
+#include <applibs/i2c.h>
+
+// Uncomment line below to enable debugging messages
+#define APDS9960_DEBUG
+
 #define APDS9960_I2C_ADDRESS    0x39
 
 // APDS9960 Registers
@@ -72,6 +77,9 @@ extern "C" {
 #define APDS9960_GFIFO_L    0xFE    // Gesture FIFO LEFT value
 #define APDS9960_GFIFO_R    0xFF    // Gesture FIFO RIGHT value
 
+// Device ID
+#define APDS9960_DEVICE_ID  0xAB    // Part number identification
+
 // ENABLE Register bitfields
 typedef struct
 {
@@ -90,8 +98,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} enable_t;
-enable_t apds9960_reg_enable;   // ENABLE register contents
+} apds9960_enable_t;
+apds9960_enable_t apds9960_reg_enable;   // ENABLE register contents
 
 // PERS Register bitfields
 typedef struct
@@ -105,8 +113,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} pers_t;
-pers_t apds9960_reg_pers;   // PERS register contents
+} apds9960_pers_t;
+apds9960_pers_t apds9960_reg_pers;   // PERS register contents
 
 // CONFIG1 Register bitfields
 typedef struct
@@ -121,8 +129,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} config1_t;
-config1_t apds9960_reg_config1; // CONFIG1 register contents
+} apds9960_config1_t;
+apds9960_config1_t apds9960_reg_config1; // CONFIG1 register contents
 
 // PPULSE Register bitfields
 typedef struct
@@ -136,8 +144,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} ppulse_t;
-ppulse_t apsd9960_reg_ppulse;   // PPULSE register contents
+} apds9960_ppulse_t;
+apds9960_ppulse_t apsd9960_reg_ppulse;   // PPULSE register contents
 
 #define PPULSE_PPLEN_4US   0
 #define PPULSE_PPLEN_8US   1
@@ -159,8 +167,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} control_t;
-control_t apsd9960_reg_control;   // CONTROL register contents
+} apds9960_control_t;
+apds9960_control_t apsd9960_reg_control;   // CONTROL register contents
 
 #define CONTROL_AGAIN_1X   0
 #define CONTROL_AGAIN_4X   1
@@ -192,8 +200,8 @@ typedef struct
         };
         unsigned char byte;
 };
-} config2_t;
-config2_t apds9960_reg_config2; // CONFIG2 register contents
+} apds9960_config2_t;
+apds9960_config2_t apds9960_reg_config2; // CONFIG2 register contents
 
 #define CONFIG2_LED_BOOST_100   0   // LED Boost Current 100%
 #define CONFIG2_LED_BOOST_150   1   // LED Boost Current 150%
@@ -218,8 +226,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} status_t;
-status_t apsd9960_reg_status;   // STATUS register contents
+} apds9960_status_t;
+apds9960_status_t apsd9960_reg_status;   // STATUS register contents
 
 // CONFIG3 Register bitfields
 typedef struct
@@ -238,8 +246,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} config3_t;
-config3_t apds9960_reg_config3; // CONFIG3 register contents
+} apds9960_config3_t;
+apds9960_config3_t apds9960_reg_config3; // CONFIG3 register contents
 
 // GCONF1 Register bitfields
 typedef struct
@@ -254,8 +262,8 @@ typedef struct
         };
         unsigned char byte;
 };
-} gconf1_t;
-gconf1_t apds9960_reg_gconf1; // GCONF1 register contents
+} apds9960_gconf1_t;
+apds9960_gconf1_t apds9960_reg_gconf1; // GCONF1 register contents
 
 // GCONF2 Register bitfields
 typedef struct
@@ -271,8 +279,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} gconf2_t;
-gconf2_t apds9960_reg_gconf2; // GCONF2 register contents
+} apds9960_gconf2_t;
+apds9960_gconf2_t apds9960_reg_gconf2; // GCONF2 register contents
 
 #define GCONF2_GWTIME_0MS    0
 #define GCONF2_GWTIME_2MS    1
@@ -295,8 +303,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} gpulse_t;
-gpulse_t apds9960_reg_gpulse; // GPULSE register contents
+} apds9960_gpulse_t;
+apds9960_gpulse_t apds9960_reg_gpulse; // GPULSE register contents
 
 #define GPULSE_GPLEN_4US   0
 #define GPULSE_GPLEN_8US   1
@@ -315,8 +323,8 @@ typedef struct
         };
         unsigned char byte;
     };
-} gconf3_t;
-gconf3_t apds9960_reg_gconf3; // GCONF3 register contents
+} apds9960_gconf3_t;
+apds9960_gconf3_t apds9960_reg_gconf3; // GCONF3 register contents
 
 #define GCONF2_GDIMS_ALL   0
 #define GCONF2_GDIMS_UD    1
@@ -336,24 +344,40 @@ typedef struct
         };
         unsigned char byte;
     };
-} gconf4_t;
-gconf4_t apds9960_reg_gconf4; // GCONF4 register contents
+} apds9960_gconf4_t;
+apds9960_gconf4_t apds9960_reg_gconf4; // GCONF4 register contents
 
 // GSTATUS Register bitfields
-typedef struct
-{
-    union
-    {
-        struct
-        {
+typedef struct {
+    union {
+        struct {
             uint8_t GVALID : 1;    // Gesture FIFO Data
             uint8_t GFOV   : 1;    // Gesture FIFO Overflow
             uint8_t RSVD2  : 6;
         };
         unsigned char byte;
     };
-} gstatus_t;
-gstatus_t apds9960_reg_gstatus; // GSTATUS register contents
+} apds9960_gstatus_t;
+apds9960_gstatus_t apds9960_reg_gstatus; // GSTATUS register contents
+
+typedef struct apds9960_struct apds9960_t;
+
+struct apds9960_struct {
+    int i2c_fd;             // I2C interface file descriptor
+    I2C_DeviceAddress i2c_addr;       // I2C device address
+};
+
+apds9960_t
+*apds9960_open(int i2c_fd, I2C_DeviceAddress i2c_addr);
+
+void
+apds9960_close(apds9960_t *p_apds);
+
+bool
+apds9960_set_enable(apds9960_t *p_apds, apds9960_enable_t reg_enable);
+
+apds9960_enable_t
+apds9960_get_enable(apds9960_t *p_apds);
 
 #ifdef __cplusplus
 }

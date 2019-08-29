@@ -2,6 +2,8 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "applibs_versions.h"   // API struct versions to use for applibs APIs
 #include <applibs/log.h>
@@ -62,12 +64,13 @@ close_peripherals_and_handlers(void);
 // Termination state flag
 static volatile sig_atomic_t gb_is_termination_requested = false;
 static int i2c_fd = -1;
+static apds9960_t *p_apds;
 
+void apds9960_main(void) 
+{
 
-void apds9960_main(void) {
+    Log_Debug("APDS main\n");
 
-    Log_Debug("Open APDS\n");
-    Log_Debug("Close APDS\n");
 }
 
 /// <summary>
@@ -76,6 +79,8 @@ void apds9960_main(void) {
 int main(int argc, char *argv[])
 {
     Log_Debug("\n*** Starting ***\n");
+
+    Log_Debug("sizeof enable union %d\n", sizeof(apds9960_enable_t));
 
     gb_is_termination_requested = false;
 
@@ -97,15 +102,18 @@ int main(int argc, char *argv[])
     // Main program
     if (!gb_is_termination_requested)
     {
+        apds9960_main();
+
+        /*
         Log_Debug("Waiting for event\n");
 
         // Main program loop
         while (!gb_is_termination_requested)
         {
-
         }
 
         Log_Debug("Not waiting for event anymore\n");
+        */
     }
 
     close_peripherals_and_handlers();
@@ -173,12 +181,17 @@ init_peripherals(I2C_InterfaceId isu_id)
     }
 
     // Initialize APDS9960 board
-    // Default sensor I2C address, not using DRDYn signal
     if (result != -1)
     {
         Log_Debug("Init APDS9960\n");
-    }
+        p_apds = apds9960_open(i2c_fd, APDS9960_I2C_ADDRESS);
 
+        if (!p_apds)
+        {
+            result = -1;
+        }
+
+    }
 
     return result;
 }
@@ -188,6 +201,10 @@ close_peripherals_and_handlers(void)
 {
     // Close APDS9960 sensor
     Log_Debug("Close APDS9960\n");
+    if (p_apds)
+    {
+        apds9960_close(p_apds);
+    }
 
     // Close I2C
     if (i2c_fd)
