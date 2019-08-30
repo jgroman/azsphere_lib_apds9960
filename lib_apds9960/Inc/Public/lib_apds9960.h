@@ -433,11 +433,20 @@ enum {
     GESTURE_DIR_ALL
 };
 
+enum {
+    GESTURE_STATE_NA,
+    GESTURE_STATE_NEAR,
+    GESTURE_STATE_FAR,
+    GESTURE_STATE_ALL
+};
+
 apds9960_t
 *apds9960_open(int i2c_fd, I2C_DeviceAddress i2c_addr);
 
 void
 apds9960_close(apds9960_t *p_apds);
+
+// apds9960_als
 
 bool
 apds9960_als_enable(apds9960_t *p_apds, bool b_are_interrupts_enabled);
@@ -457,6 +466,8 @@ apds9960_als_read_green(apds9960_t *p_apds, uint16_t *value_green);
 bool
 apds9960_als_read_blue(apds9960_t *p_apds, uint16_t *value_blue);
 
+// apds9960_proximity
+
 bool
 apds9960_proximity_enable(apds9960_t *p_apds, bool b_is_interrupt_enabled);
 
@@ -465,6 +476,18 @@ apds9960_proximity_disable(apds9960_t *p_apds);
 
 bool
 apds9960_proximity_read(apds9960_t *p_apds, uint8_t *p_value_proximity);
+
+// apds9960_gesture
+
+bool
+apds9960_gesture_enable(apds9960_t *p_apds, bool b_is_interrupt_enabled);
+
+bool
+apds9960_gesture_disable(apds9960_t *p_apds);
+
+bool
+apds9960_gesture_is_available(apds9960_t *p_apds, bool *p_value);
+
 
 #ifdef __cplusplus
 }

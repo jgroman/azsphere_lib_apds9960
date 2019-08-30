@@ -19,14 +19,6 @@ static int
 i2c_write_read(apds9960_t *p_apds, const uint8_t *p_buf_write, size_t len_write,
     uint8_t *p_buf_read, size_t len_read);
 
-static bool
-reg_read(apds9960_t *p_apds, uint8_t reg_addr, uint8_t *p_data,
-    uint32_t data_len);
-
-static bool
-reg_write(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data,
-    uint32_t data_len);
-
 /*******************************************************************************
 * Global variables
 *******************************************************************************/
@@ -58,6 +50,76 @@ bool
 reg_write8(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data)
 {
     return reg_write(p_apds, reg_addr, p_data, 1);
+}
+
+bool
+reg_read(apds9960_t *p_apds, uint8_t reg_addr, uint8_t *p_data,
+    uint32_t data_len)
+{
+    bool result = false;
+
+    if (p_apds && p_data)
+    {
+        DEBUG_DEV(" REG READ [%02X] bytes %d", __FUNCTION__, p_apds, reg_addr,
+            data_len);
+
+        ssize_t i2c_result;
+
+        // Select register and read its data
+        i2c_result = i2c_write_read(p_apds, &reg_addr, 1, p_data, data_len);
+
+        if (i2c_result != -1)
+        {
+            result = true;
+#			ifdef APDS9960_DEBUG
+            log_printf("APDS %s (0x%02X):  READ ",
+                __FUNCTION__, p_apds->i2c_addr);
+            for (int i = 0; i < data_len; i++) {
+                log_printf("%02X ", p_data[i]);
+            }
+            log_printf("\n");
+#			endif
+        }
+    }
+    return result;
+}
+
+bool
+reg_write(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data,
+    uint32_t data_len)
+{
+    bool result = false;
+
+    if (p_apds && p_data)
+    {
+        DEBUG_DEV(" REG WRITE [%02X] bytes %d", __FUNCTION__, p_apds, reg_addr,
+            data_len);
+
+        uint8_t buffer[data_len + 1];
+
+        buffer[0] = reg_addr;
+        for (uint32_t i = 0; i < data_len; i++) {
+            buffer[i + 1] = p_data[i];
+        }
+
+#		ifdef APDS9960_DEBUG
+        log_printf("APDS %s (0x%02X):  WRITE ",
+            __FUNCTION__, p_apds->i2c_addr);
+        for (int i = 0; i < data_len; i++) {
+            log_printf("%02X ", p_data[i]);
+        }
+        log_printf("\n");
+#		endif
+
+        // Select register and write data
+        ssize_t i2c_result = i2c_write(p_apds, buffer, data_len + 1);
+
+        if (i2c_result != -1)
+        {
+            result = true;
+        }
+    }
+    return result;
 }
 
 /*******************************************************************************
@@ -113,76 +175,6 @@ i2c_write_read(apds9960_t *p_apds, const uint8_t *p_buf_write, size_t len_write,
             __FUNCTION__, p_apds, errno, strerror(errno), p_apds->i2c_addr);
     }
 
-    return result;
-}
-
-static bool
-reg_read(apds9960_t *p_apds, uint8_t reg_addr, uint8_t *p_data,
-    uint32_t data_len)
-{
-    bool result = false;
-
-    if (p_apds && p_data)
-    {
-        DEBUG_DEV(" REG READ [%02X] bytes %d", __FUNCTION__, p_apds, reg_addr,
-            data_len);
-
-        ssize_t i2c_result;
-
-        // Select register and read its data
-        i2c_result = i2c_write_read(p_apds, &reg_addr, 1, p_data, data_len);
-
-        if (i2c_result != -1)
-        {
-            result = true;
-#			ifdef APDS9960_DEBUG
-            log_printf("APDS %s (0x%02X):  READ ",
-                __FUNCTION__, p_apds->i2c_addr);
-            for (int i = 0; i < data_len; i++) {
-                log_printf("%02X ", p_data[i]);
-            }
-            log_printf("\n");
-#			endif
-        }
-    }
-    return result;
-}
-
-static bool
-reg_write(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data,
-    uint32_t data_len)
-{
-    bool result = false;
-
-    if (p_apds && p_data)
-    {
-        DEBUG_DEV(" REG WRITE [%02X] bytes %d", __FUNCTION__, p_apds, reg_addr,
-            data_len);
-
-        uint8_t buffer[data_len + 1];
-
-        buffer[0] = reg_addr;
-        for (uint32_t i = 0; i < data_len; i++) {
-            buffer[i + 1] = p_data[i];
-        }
-
-#		ifdef APDS9960_DEBUG
-        log_printf("APDS %s (0x%02X):  WRITE ",
-            __FUNCTION__, p_apds->i2c_addr);
-        for (int i = 0; i < data_len; i++) {
-            log_printf("%02X ", p_data[i]);
-        }
-        log_printf("\n");
-#		endif
-
-        // Select register and write data
-        ssize_t i2c_result = i2c_write(p_apds, buffer, data_len + 1);
-
-        if (i2c_result != -1)
-        {
-            result = true;
-        }
-    }
     return result;
 }
 
