@@ -46,7 +46,12 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="apds9960_als.c" />
+    <ClCompile Include="apds9960_common.c" />
+    <ClCompile Include="apds9960_gesture.c" />
+    <ClCompile Include="apds9960_proximity.c" />
     <ClCompile Include="lib_apds9960.c" />
+    <ClInclude Include="apds9960_common.h" />
     <ClInclude Include="Inc\Public\lib_apds9960.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

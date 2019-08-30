@@ -18,9 +18,24 @@
     <ClCompile Include="lib_apds9960.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="apds9960_common.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="apds9960_als.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="apds9960_proximity.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="apds9960_gesture.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Inc\Public\lib_apds9960.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="apds9960_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

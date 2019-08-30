@@ -22,7 +22,7 @@ extern "C" {
 #include <applibs/i2c.h>
 
 // Uncomment line below to enable debugging messages
-//#define APDS9960_DEBUG
+#define APDS9960_DEBUG
 
 #define APDS9960_I2C_ADDRESS    0x39
 
@@ -79,6 +79,35 @@ extern "C" {
 
 // Device ID
 #define APDS9960_DEVICE_ID  0xAB    // Part number identification
+
+#define APDS_INIT_ATIME           219     // 103ms
+#define APDS_INIT_WTIME           246     // 27ms
+#define APDS_INIT_PPULSE_PROX     0x87    // 16us, 8 pulses, proximity
+#define APDS_INIT_PPULSE_GEST     0x89    // 16us, 10 pulses, gesture
+#define APDS_INIT_POFFSET_UR      0       // 0 offset
+#define APDS_INIT_POFFSET_DL      0       // 0 offset
+#define APDS_INIT_CONFIG1         0x60    // No 12x wait (WTIME) factor
+#define APDS_INIT_LDRIVE          CONTROL_LDRIVE_100MA
+#define APDS_INIT_PGAIN           CONTROL_PGAIN_4X
+#define APDS_INIT_AGAIN           CONTROL_AGAIN_4X
+#define APDS_INIT_PILT            0       // Low proximity threshold
+#define APDS_INIT_PIHT            50      // High proximity threshold
+#define APDS_INIT_AILT            0xFFFF  // Force interrupt for calibration
+#define APDS_INIT_AIHT            0
+#define APDS_INIT_PERS            0x11    // 2 consecutive prox or ALS for int.
+#define APDS_INIT_CONFIG2         0x01    // No satur interrupts or LED boost  
+#define APDS_INIT_CONFIG3         0       // Enable all photodiodes, no SAI
+#define APDS_INIT_GPENTH          40      // Threshold for entering gesture mode
+#define APDS_INIT_GEXTH           30      // Threshold for exiting gesture mode    
+#define APDS_INIT_GCONF1          0x40    // 4 events for int., 1 for exit
+#define APDS_INIT_GGAIN           GCONF2_GGAIN_4X
+#define APDS_INIT_GLDRIVE         GCONF2_GLDRIVE_100MA
+#define APDS_INIT_GWTIME          GCONF2_GWTIME_2MS
+#define APDS_INIT_GOFFSET         0       // No offset scaling for gesture mode
+#define APDS_INIT_GPULSE          0xC9    // 32us, 10 pulses
+#define APDS_INIT_GCONF3          0       // All diodes active during gesture
+#define APDS_INIT_GIEN            0       // Disable gesture interrupts
+
 
 // ENABLE Register bitfields
 typedef struct
@@ -357,11 +386,51 @@ typedef struct {
     };
 } apds9960_gstatus_t;
 
-typedef struct apds9960_struct apds9960_t;
+typedef struct
+{
+    uint8_t u_data[32];
+    uint8_t d_data[32];
+    uint8_t l_data[32];
+    uint8_t r_data[32];
+    uint8_t index;
+    uint8_t total_gestures;
+    uint8_t in_threshold;
+    uint8_t out_threshold;
+} apds9960_gesture_data_t;
 
-struct apds9960_struct {
-    int i2c_fd;                  // I2C interface file descriptor
-    I2C_DeviceAddress i2c_addr;  // I2C device address
+typedef struct
+{
+    int ud;
+    int lr;
+} apds9960_gesture_delta_t;
+
+typedef struct
+{
+    int ud;
+    int lr;
+    int near;
+    int far;
+} apds9960_gesture_count_t;
+
+typedef struct {
+    int i2c_fd;                                 // I2C interface file descriptor
+    I2C_DeviceAddress i2c_addr;                 // I2C device address
+    apds9960_gesture_data_t gesture_data;
+    apds9960_gesture_delta_t gesture_delta;
+    apds9960_gesture_count_t gesture_count;
+    int gesture_state;
+    int gesture_motion;
+} apds9960_t;
+
+enum {
+    GESTURE_DIR_NONE,
+    GESTURE_DIR_LEFT,
+    GESTURE_DIR_RIGHT,
+    GESTURE_DIR_UP,
+    GESTURE_DIR_DOWN,
+    GESTURE_DIR_NEAR,
+    GESTURE_DIR_FAR,
+    GESTURE_DIR_ALL
 };
 
 apds9960_t
