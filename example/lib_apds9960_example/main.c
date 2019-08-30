@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "applibs_versions.h"   // API struct versions to use for applibs APIs
 #include <applibs/log.h>
@@ -66,21 +67,10 @@ static volatile sig_atomic_t gb_is_termination_requested = false;
 static int i2c_fd = -1;
 static apds9960_t *p_apds;
 
-void apds9960_main(void) 
-{
-
-    Log_Debug("APDS main\n");
-
-}
-
-/// <summary>
-///     Application main entry point
-/// </summary>
-int main(int argc, char *argv[])
+int 
+main(int argc, char *argv[])
 {
     Log_Debug("\n*** Starting ***\n");
-
-    Log_Debug("sizeof enable union %d\n", sizeof(apds9960_enable_t));
 
     gb_is_termination_requested = false;
 
@@ -102,18 +92,56 @@ int main(int argc, char *argv[])
     // Main program
     if (!gb_is_termination_requested)
     {
-        apds9960_main();
+        Log_Debug("ALS enable\n");
+        apds9960_als_enable(p_apds, false);
 
-        /*
-        Log_Debug("Waiting for event\n");
+        Log_Debug("Proximity enable\n");
+        apds9960_proximity_enable(p_apds, false);
+
+
+        Log_Debug("Entering main loop\n");
+
+        uint8_t counter = 0;
+        struct timespec sleep_time;
+        uint16_t clear_value;
+        uint16_t red_value;
+        uint16_t green_value;
+        uint16_t blue_value;
+
+        uint8_t prox_value;
+
+        sleep_time.tv_nsec = 0;
+        sleep_time.tv_sec = 2;
 
         // Main program loop
         while (!gb_is_termination_requested)
         {
+            apds9960_als_read_clear(p_apds, &clear_value);
+            apds9960_als_read_red(p_apds, &red_value);
+            apds9960_als_read_green(p_apds, &green_value);
+            apds9960_als_read_blue(p_apds, &blue_value);
+            Log_Debug("ALS: clear 0x%04X, red 0x%04X, green 0x%04X, blue 0x%04X \n", clear_value, red_value, green_value, blue_value);
+
+            apds9960_proximity_read(p_apds, &prox_value);
+            Log_Debug("Proximity: 0x%02X\n", prox_value);
+
+            nanosleep(&sleep_time, NULL);
+
+            counter++;
+            if (counter == 20)
+            {
+                gb_is_termination_requested = true;
+            }
         }
 
-        Log_Debug("Not waiting for event anymore\n");
-        */
+        Log_Debug("Leaving main loop\n");
+
+        Log_Debug("ALS disable\n");
+        apds9960_als_disable(p_apds);
+
+        Log_Debug("Proximity disable\n");
+        apds9960_proximity_disable(p_apds);
+
     }
 
     close_peripherals_and_handlers();
