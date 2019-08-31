@@ -29,11 +29,11 @@ reg_read8(apds9960_t *p_apds, uint8_t reg_addr, uint8_t *p_data);
 bool
 reg_write8(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data);
 
-bool
+ssize_t
 reg_read(apds9960_t *p_apds, uint8_t reg_addr, uint8_t *p_data,
     uint32_t data_len);
 
-bool
+ssize_t
 reg_write(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data,
     uint32_t data_len);
 

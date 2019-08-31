@@ -388,14 +388,14 @@ typedef struct {
 
 typedef struct
 {
-    uint8_t u_data[32];
-    uint8_t d_data[32];
-    uint8_t l_data[32];
-    uint8_t r_data[32];
+    uint8_t u[32];      // Data buffer Up
+    uint8_t d[32];      // Data buffer Down
+    uint8_t l[32];      // Data buffer Left
+    uint8_t r[32];      // Data buffer Right
     uint8_t index;
-    uint8_t total_gestures;
-    uint8_t in_threshold;
-    uint8_t out_threshold;
+    uint8_t count;      // Gesture count
+    uint8_t thold_in;   // Gesture Threshold In
+    uint8_t thold_out;  // Gesture Threshold Out
 } apds9960_gesture_data_t;
 
 typedef struct
@@ -486,7 +486,7 @@ bool
 apds9960_gesture_disable(apds9960_t *p_apds);
 
 bool
-apds9960_gesture_is_available(apds9960_t *p_apds, bool *p_value);
+apds9960_gesture_is_valid(apds9960_t *p_apds, bool *p_value);
 
 
 #ifdef __cplusplus

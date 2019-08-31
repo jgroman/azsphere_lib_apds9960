@@ -12,10 +12,10 @@
 * Forward declarations of private functions
 *******************************************************************************/
 
-static int
+static ssize_t
 i2c_write(apds9960_t *p_apds, const uint8_t *p_buf, size_t buf_len);
 
-static int
+static ssize_t
 i2c_write_read(apds9960_t *p_apds, const uint8_t *p_buf_write, size_t len_write,
     uint8_t *p_buf_read, size_t len_read);
 
@@ -43,52 +43,63 @@ log_printf(const char *p_format, ...)
 bool
 reg_read8(apds9960_t *p_apds, uint8_t reg_addr, uint8_t *p_data)
 {
-    return reg_read(p_apds, reg_addr, p_data, 1);
+    bool b_result = false;
+
+    if (reg_read(p_apds, reg_addr, p_data, 1) != -1)
+    {
+        b_result = true;
+    }
+
+    return b_result;
 }
 
 bool
 reg_write8(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data)
 {
-    return reg_write(p_apds, reg_addr, p_data, 1);
+    bool b_result = false;
+
+    if (reg_write(p_apds, reg_addr, p_data, 1) != -1)
+    {
+        b_result = true;
+    }
+
+    return b_result;
 }
 
-bool
+ssize_t
 reg_read(apds9960_t *p_apds, uint8_t reg_addr, uint8_t *p_data,
     uint32_t data_len)
 {
-    bool result = false;
+    ssize_t result = -1;
 
     if (p_apds && p_data)
     {
         DEBUG_DEV(" REG READ [%02X] bytes %d", __FUNCTION__, p_apds, reg_addr,
             data_len);
 
-        ssize_t i2c_result;
-
         // Select register and read its data
-        i2c_result = i2c_write_read(p_apds, &reg_addr, 1, p_data, data_len);
+        result = i2c_write_read(p_apds, &reg_addr, 1, p_data, data_len);
 
-        if (i2c_result != -1)
+#   	ifdef APDS9960_DEBUG
+        if (result != -1)
         {
-            result = true;
-#			ifdef APDS9960_DEBUG
             log_printf("APDS %s (0x%02X):  READ ",
                 __FUNCTION__, p_apds->i2c_addr);
             for (int i = 0; i < data_len; i++) {
                 log_printf("%02X ", p_data[i]);
             }
             log_printf("\n");
-#			endif
         }
+#       endif
     }
     return result;
 }
 
-bool
+ssize_t
 reg_write(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data,
     uint32_t data_len)
 {
-    bool result = false;
+    ssize_t result = -1;
 
     if (p_apds && p_data)
     {
@@ -112,13 +123,9 @@ reg_write(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data,
 #		endif
 
         // Select register and write data
-        ssize_t i2c_result = i2c_write(p_apds, buffer, data_len + 1);
-
-        if (i2c_result != -1)
-        {
-            result = true;
-        }
+        result = i2c_write(p_apds, buffer, data_len + 1);
     }
+
     return result;
 }
 
@@ -126,7 +133,7 @@ reg_write(apds9960_t *p_apds, uint8_t reg_addr, const uint8_t *p_data,
 * Private function definitions
 *******************************************************************************/
 
-static int
+static ssize_t
 i2c_write(apds9960_t *p_apds, const uint8_t *p_buf, size_t buf_len)
 {
     ssize_t result;
@@ -162,7 +169,7 @@ i2c_read(apds9960_t *p_apds, uint8_t* p_buf, size_t buf_len)
 }
 #endif
 
-static int
+static ssize_t
 i2c_write_read(apds9960_t *p_apds, const uint8_t *p_buf_write, size_t len_write,
     uint8_t *p_buf_read, size_t len_read)
 {
