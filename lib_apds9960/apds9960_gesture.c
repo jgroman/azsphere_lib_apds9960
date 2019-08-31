@@ -260,6 +260,10 @@ apds9960_gesture_read(apds9960_t *p_apds)
                         if (gesture_decode(p_apds))
                         {
                             // Process multi-gesture sequences here
+#   	                    ifdef APDS9960_DEBUG
+                            DEBUG("Multi gesture %d", __FUNCTION__, p_apds->gesture_motion);
+#                           endif
+
                         }
                     }
 

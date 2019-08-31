@@ -53,46 +53,28 @@
             "Comment": "MT3620 SK: User LED BLUE Channel."
         },
         {
-            "Name": "PROJECT_UART",
-            "Type": "Uart",
-            "Mapping": "AVNET_MT3620_SK_ISU0_UART",
-            "Comment": "MT3620 SK: Connect SOCKET1 RX (RX) to SOCKET1 TX (TX)."
-        },
-        {
             "Name": "PROJECT_ISU2_I2C",
             "Type": "I2cMaster",
             "Mapping": "AVNET_MT3620_SK_ISU2_I2C",
             "Comment": "MT3620 SK: SOCKET1, SOCKET2, GROVE & OLED I2C ISU."
         },
         {
-            "Name": "PROJECT_GPIO2",
+            "Name": "PROJECT_SOCKET12_INT",
             "Type": "Gpio",
             "Mapping": "AVNET_MT3620_SK_GPIO2",
             "Comment": "MT3620 SK: SOCKET1 & SOCKET2 INT pin."
         },
         {
-            "Name": "PROJECT_GPIO34",
+            "Name": "PROJECT_SOCKET1_CS",
             "Type": "Gpio",
             "Mapping": "AVNET_MT3620_SK_GPIO34",
             "Comment": "MT3620 SK: SOCKET1 CS pin."
         },
         {
-            "Name": "PROJECT_GPIO35",
-            "Type": "Gpio",
-            "Mapping": "AVNET_MT3620_SK_GPIO35",
-            "Comment": "MT3620 SK: SOCKET2 CS pin."
-        },
-        {
-            "Name": "PROJECT_GPIO16",
+            "Name": "PROJECT_SOCKET1_RST",
             "Type": "Gpio",
             "Mapping": "AVNET_MT3620_SK_GPIO16",
-            "Comment": "MT3620 SK: SOCKET2 RST pin."
-        },
-        {
-            "Name": "PROJECT_GPIO17",
-            "Type": "Gpio",
-            "Mapping": "AVNET_MT3620_SK_GPIO17",
-            "Comment": "MT3620 SK: SOCKET2 RST pin."
+            "Comment": "MT3620 SK: SOCKET1 RST pin."
         }
 
     ]

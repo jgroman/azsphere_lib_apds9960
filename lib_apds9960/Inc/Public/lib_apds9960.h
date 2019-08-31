@@ -488,6 +488,9 @@ apds9960_gesture_disable(apds9960_t *p_apds);
 bool
 apds9960_gesture_is_valid(apds9960_t *p_apds, bool *p_value);
 
+int
+apds9960_gesture_read(apds9960_t *p_apds);
+
 
 #ifdef __cplusplus
 }
