@@ -82,18 +82,17 @@ reg_read(apds9960_t *p_apds, uint8_t reg_addr, uint8_t *p_data,
                 __FUNCTION__, p_apds, errno, strerror(errno), p_apds->i2c_addr);
 #           endif
         }
-
-#   	ifdef APDS9960_I2C_DEBUG
-        if (result != -1)
+        else
         {
+    #   	ifdef APDS9960_I2C_DEBUG
             log_printf("APDS %s (0x%02X):  READ ",
                 __FUNCTION__, p_apds->i2c_addr);
             for (int i = 0; i < data_len; i++) {
                 log_printf("%02X ", p_data[i]);
             }
             log_printf("\n");
+#           endif
         }
-#       endif
     }
     
     // Return length of read data only

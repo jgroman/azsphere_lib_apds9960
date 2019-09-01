@@ -57,7 +57,7 @@ apds9960_gesture_enable(apds9960_t *p_apds, bool b_is_interrupt_enabled)
     if (b_is_all_ok)
     {
         // CONFIG2
-        // -- LED_BOOST: 300 mA
+        // -- LED_BOOST: 300 %
         apds9960_config2_t reg_config2;
         b_is_all_ok = reg_read8(p_apds, APDS9960_CONFIG2, &reg_config2.byte);
 
@@ -197,6 +197,9 @@ apds9960_gesture_read(apds9960_t *p_apds)
     // Endless loop as long as gestures are available
     while (b_is_all_ok)
     {
+        // Wait for FIFO to fill up
+        nanosleep(&FIFO_DELAY, NULL);
+
         // Get current gesture availability
         b_is_all_ok = apds9960_gesture_is_valid(p_apds, &b_is_valid);
         if (!b_is_all_ok)
@@ -217,11 +220,9 @@ apds9960_gesture_read(apds9960_t *p_apds)
         }
         else
         {
-            // Wait for FIFO to fill up
-            nanosleep(&FIFO_DELAY, NULL);
-
             // Get current FIFO level
             b_is_all_ok = reg_read8(p_apds, APDS9960_GFLVL, &fifo_level);
+
             if (!b_is_all_ok)
             {
                 // Cannot get FIFO level
@@ -232,45 +233,44 @@ apds9960_gesture_read(apds9960_t *p_apds)
             // If there's data in the FIFO, copy datasets into buffer
             if (fifo_level > 0)
             {
+                p_gdata->dset_count = 0;
+
                 // Read FIFO
-                bytes_read = reg_read(p_apds, APDS9960_GFIFO_U, ds_buffer,
-                    (uint32_t)4 * fifo_level);
-
-                if (bytes_read == -1)
+                for (idx = 0; idx < fifo_level; idx ++)
                 {
-                    ERROR("Cannot read FIFO data.", __FUNCTION__);
-                    result = -1;
-                    break;
-                }
+                    // Seems that reading more than 8 bytes at a time from FIFO 
+                    // produces erratic results
+                    bytes_read = reg_read(p_apds, APDS9960_GFIFO_U, ds_buffer, 4);
 
-                // If at least 1 dataset, sort the data into U/D/L/R
-                if (bytes_read >= 4)
-                {
-                    p_gdata->dset_count = 0;
-
-                    for (idx = 0; idx < bytes_read; idx += 4)
+                    if (bytes_read == -1)
                     {
-                        p_gdata->u[p_gdata->dset_count] = ds_buffer[idx];
-                        p_gdata->d[p_gdata->dset_count] = ds_buffer[idx + 1];
-                        p_gdata->l[p_gdata->dset_count] = ds_buffer[idx + 2];
-                        p_gdata->r[p_gdata->dset_count] = ds_buffer[idx + 3];
-                        p_gdata->dset_count++;
+                        ERROR("Cannot read FIFO data.", __FUNCTION__);
+                        result = -1;
+                        break;
                     }
 
-                    // At this point p_gdata holds current gesture datasets
-                    // p_gdata->dset_count contains number of valid datasets
+                    // Sort datasets from FIFO into U/D/L/R
+                    p_gdata->u[p_gdata->dset_count] = ds_buffer[0];
+                    p_gdata->d[p_gdata->dset_count] = ds_buffer[1];
+                    p_gdata->l[p_gdata->dset_count] = ds_buffer[2];
+                    p_gdata->r[p_gdata->dset_count] = ds_buffer[3];
 
-                    // Filter and process gesture data
-                    if (gesture_process_data(p_apds))
+                    p_gdata->dset_count++;
+                }
+
+                // At this point p_gdata holds current gesture datasets
+                // p_gdata->dset_count contains number of valid datasets
+
+                // Filter and process gesture data
+                if (gesture_process_data(p_apds))
+                {
+                    if (gesture_decode(p_apds))
                     {
-                        if (gesture_decode(p_apds))
-                        {
-                            // Process multi-gesture sequences here or quit
-                            // at the first decoded valid gesture
+                        // Process multi-gesture sequences here or quit
+                        // at the first decoded valid gesture
 #   	                    ifdef APDS9960_DEBUG
-                            DEBUG("Multi gesture %d\n", __FUNCTION__, p_apds->gesture_motion);
+                        DEBUG("Multi gesture %d\n", __FUNCTION__, p_apds->gesture_motion);
 #                           endif
-                        }
                     }
                 }
             }
@@ -483,7 +483,7 @@ gesture_process_data(apds9960_t *p_apds)
                     {
                         p_apds->gesture_state = GESTURE_STATE_NEAR;
                     }
-                    else
+                    else if ((ud_delta != 0) && (lr_delta != 0))
                     {
                         p_apds->gesture_state = GESTURE_STATE_FAR;
                     }

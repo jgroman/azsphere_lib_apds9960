@@ -22,7 +22,7 @@ extern "C" {
 #include <applibs/i2c.h>
 
 // Uncomment line below to enable debugging messages
-#define APDS9960_DEBUG
+//#define APDS9960_DEBUG
 
 #define APDS9960_I2C_ADDRESS    0x39
 
