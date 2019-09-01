@@ -1,4 +1,4 @@
-#pragma once
+
 
 #ifndef _APDS9960_COMMON_H_
 #define _APDS9960_COMMON_H_
@@ -19,6 +19,8 @@ extern "C" {
 
 #define ERROR(s, f, ...) log_printf("%s %s: " s "\n", "ADPS9960", f, ## __VA_ARGS__)
 
+// Uncomment line below to see I2C debug data
+//#define APDS9960_I2C_DEBUG
 
 int
 log_printf(const char *p_format, ...);

@@ -392,8 +392,7 @@ typedef struct
     uint8_t d[32];      // Data buffer Down
     uint8_t l[32];      // Data buffer Left
     uint8_t r[32];      // Data buffer Right
-    uint8_t index;
-    uint8_t count;      // Gesture count
+    uint8_t dset_count; // Gesture datasets count
     uint8_t thold_in;   // Gesture Threshold In
     uint8_t thold_out;  // Gesture Threshold Out
 } apds9960_gesture_data_t;

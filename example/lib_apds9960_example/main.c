@@ -128,8 +128,8 @@ main(int argc, char *argv[])
 
         Log_Debug("Entering main loop\n");
 
-        uint8_t counter = 0;
-        struct timespec sleep_time;
+        //uint8_t counter = 0;
+        //struct timespec sleep_time;
         //uint16_t clear_value;
         //uint16_t red_value;
         //uint16_t green_value;
@@ -137,8 +137,8 @@ main(int argc, char *argv[])
 
         //uint8_t prox_value;
 
-        sleep_time.tv_nsec = 0;
-        sleep_time.tv_sec = 2;
+        //sleep_time.tv_nsec = 0;
+        //sleep_time.tv_sec = 2;
 
         // Main program loop
         while (!gb_is_termination_requested)
@@ -160,6 +160,7 @@ main(int argc, char *argv[])
                 gb_is_termination_requested = true;
             }
 
+            /*
             nanosleep(&sleep_time, NULL);
 
             counter++;
@@ -167,6 +168,7 @@ main(int argc, char *argv[])
             {
                 gb_is_termination_requested = true;
             }
+            */
         }
 
         Log_Debug("Leaving main loop\n");
@@ -283,7 +285,7 @@ init_peripherals(I2C_InterfaceId isu_id)
     // Create timer for apds9960 interrupt signal check
     if (result != -1)
     {
-        struct timespec apds9960_int_check_period = { 0, 250000000 };
+        struct timespec apds9960_int_check_period = { 0, 100000000 };
         apds9960_int_poll_timer_fd = CreateTimerFdAndAddToEpoll(epoll_fd,
             &apds9960_int_check_period, &apds9960_int_event_data, EPOLLIN);
         if (apds9960_int_poll_timer_fd < 0)
@@ -321,8 +323,6 @@ close_peripherals_and_handlers(void)
 static void
 apds9960_interrupt_handler(void)
 {
-    Log_Debug("APDS interrupt\n");
-
     bool b_gesture_valid;
     apds9960_gesture_is_valid(p_apds, &b_gesture_valid);
 
@@ -330,7 +330,7 @@ apds9960_interrupt_handler(void)
     {
         int gesture = apds9960_gesture_read(p_apds);
 
-        Log_Debug("Gesture %d \n", gesture);
+        Log_Debug("Gesture %d ", gesture);
 
         switch (gesture)
         {
@@ -357,6 +357,8 @@ apds9960_interrupt_handler(void)
             Log_Debug("Unknown\n");
             break;
         }
+
+        Log_Debug("\n");
     }
 
 

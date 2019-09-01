@@ -1,6 +1,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "lib_apds9960.h"
@@ -42,13 +43,13 @@ apds9960_gesture_enable(apds9960_t *p_apds, bool b_is_interrupt_enabled)
 
     gesture_reset_params(p_apds);
 
-    // WTIME
+    // WTIME: Proximity wait time 2.78 ms
     reg_byte = 0xFF;
     b_is_all_ok = reg_write8(p_apds, APDS9960_WTIME, &reg_byte);
 
     if (b_is_all_ok)
     {
-        // PPULSE
+        // PPULSE: Proximity 16 us, 10 pulses
         reg_byte = APDS_INIT_PPULSE_GEST;
         b_is_all_ok = reg_write8(p_apds, APDS9960_PPULSE, &reg_byte);
     }
@@ -168,11 +169,11 @@ apds9960_gesture_is_valid(apds9960_t *p_apds, bool *p_value)
 int
 apds9960_gesture_read(apds9960_t *p_apds)
 {
-    const struct timespec fifo_delay = { 0, FIFO_PAUSE_TIME_MS * 1000000 };
+    const struct timespec FIFO_DELAY = { 0, FIFO_PAUSE_TIME_MS * 1000000 };
 
     uint8_t fifo_level = 0;
     ssize_t bytes_read = 0;
-    uint8_t fifo_data[128];
+    uint8_t ds_buffer[128];
     int result = -1;
     int idx;
 
@@ -207,7 +208,8 @@ apds9960_gesture_read(apds9960_t *p_apds)
 
         if (!b_is_valid)
         {
-            // No more gestures available, determine gest guessed gesture
+            // No more gestures available
+            // Use accumulated data to decode gesture
             gesture_decode(p_apds);
             result = p_apds->gesture_motion;
             gesture_reset_params(p_apds);
@@ -215,6 +217,9 @@ apds9960_gesture_read(apds9960_t *p_apds)
         }
         else
         {
+            // Wait for FIFO to fill up
+            nanosleep(&FIFO_DELAY, NULL);
+
             // Get current FIFO level
             b_is_all_ok = reg_read8(p_apds, APDS9960_GFLVL, &fifo_level);
             if (!b_is_all_ok)
@@ -224,52 +229,49 @@ apds9960_gesture_read(apds9960_t *p_apds)
                 break;
             }
 
-            // If there's data in the FIFO, copy it into fifo_data
+            // If there's data in the FIFO, copy datasets into buffer
             if (fifo_level > 0)
             {
-                // Delay before reading FIFO again
-                nanosleep(&fifo_delay, NULL);
-
                 // Read FIFO
-                bytes_read = reg_read(p_apds, APDS9960_GFIFO_U, fifo_data,
+                bytes_read = reg_read(p_apds, APDS9960_GFIFO_U, ds_buffer,
                     (uint32_t)4 * fifo_level);
 
                 if (bytes_read == -1)
                 {
-                    // Cannot read FIFO data
+                    ERROR("Cannot read FIFO data.", __FUNCTION__);
                     result = -1;
                     break;
                 }
 
-                // If at least 1 set of data, sort the data into U/D/L/R
+                // If at least 1 dataset, sort the data into U/D/L/R
                 if (bytes_read >= 4)
                 {
+                    p_gdata->dset_count = 0;
+
                     for (idx = 0; idx < bytes_read; idx += 4)
                     {
-                        p_gdata->u[p_gdata->index] = fifo_data[idx];
-                        p_gdata->d[p_gdata->index] = fifo_data[idx + 1];
-                        p_gdata->l[p_gdata->index] = fifo_data[idx + 2];
-                        p_gdata->r[p_gdata->index] = fifo_data[idx + 3];
-                        p_gdata->index++;
-                        p_gdata->count++;
+                        p_gdata->u[p_gdata->dset_count] = ds_buffer[idx];
+                        p_gdata->d[p_gdata->dset_count] = ds_buffer[idx + 1];
+                        p_gdata->l[p_gdata->dset_count] = ds_buffer[idx + 2];
+                        p_gdata->r[p_gdata->dset_count] = ds_buffer[idx + 3];
+                        p_gdata->dset_count++;
                     }
+
+                    // At this point p_gdata holds current gesture datasets
+                    // p_gdata->dset_count contains number of valid datasets
 
                     // Filter and process gesture data
                     if (gesture_process_data(p_apds))
                     {
                         if (gesture_decode(p_apds))
                         {
-                            // Process multi-gesture sequences here
+                            // Process multi-gesture sequences here or quit
+                            // at the first decoded valid gesture
 #   	                    ifdef APDS9960_DEBUG
-                            DEBUG("Multi gesture %d", __FUNCTION__, p_apds->gesture_motion);
+                            DEBUG("Multi gesture %d\n", __FUNCTION__, p_apds->gesture_motion);
 #                           endif
-
                         }
                     }
-
-                    // Reset data
-                    p_gdata->index = 0;
-                    p_gdata->count = 0;
                 }
             }
         }
@@ -286,8 +288,7 @@ apds9960_gesture_read(apds9960_t *p_apds)
 static void
 gesture_reset_params(apds9960_t *p_apds)
 {
-    p_apds->gesture_data.index = 0;
-    p_apds->gesture_data.count = 0;
+    p_apds->gesture_data.dset_count = 0;
     p_apds->gesture_delta.lr = 0;
     p_apds->gesture_delta.ud = 0;
     p_apds->gesture_count.lr = 0;
@@ -315,7 +316,7 @@ gesture_process_data(apds9960_t *p_apds)
     int lr_ratio_last;
     int ud_delta;
     int lr_delta;
-    int idx;
+    uint8_t idx;
 
     // Shortcuts to Gesture data structs
     apds9960_gesture_data_t *p_gdata = &p_apds->gesture_data;
@@ -324,12 +325,45 @@ gesture_process_data(apds9960_t *p_apds)
 
     bool b_is_all_ok = false;
 
-    // At least 5 gestures are required for processing
+    DEBUG("Processing cycles %d", __FUNCTION__, p_gdata->dset_count);
+
+# 	ifdef APDS9960_DEBUG
+    log_printf("U: ");
+    for (idx = 0; idx < p_gdata->dset_count; idx++)
+    {
+        log_printf("%02X ", p_gdata->u[idx]);
+    }
+    log_printf("\n");
+
+    log_printf("D: ");
+    for (idx = 0; idx < p_gdata->dset_count; idx++)
+    {
+        log_printf("%02X ", p_gdata->d[idx]);
+    }
+    log_printf("\n");
+
+    log_printf("L: ");
+    for (idx = 0; idx < p_gdata->dset_count; idx++)
+    {
+        log_printf("%02X ", p_gdata->l[idx]);
+    }
+    log_printf("\n");
+
+    log_printf("R: ");
+    for (idx = 0; idx < p_gdata->dset_count; idx++)
+    {
+        log_printf("%02X ", p_gdata->r[idx]);
+    }
+    log_printf("\n");
+#   endif
+
+
+    // At least 5 gesture integration cycles are required for processing
     // Check gesture data bounds
-    if ((p_gdata->count > 4) && (p_gdata->count <= 32))
+    if ((p_gdata->dset_count > 4) && (p_gdata->dset_count <= 32))
     {
         // Find the first sample where all UDLR values are above Out threshold
-        for (idx = 0; idx < p_gdata->count; idx++)
+        for (idx = 0; idx < p_gdata->dset_count; idx++)
         {
             if ((p_gdata->u[idx] > GESTURE_THOLD_OUT) &&
                 (p_gdata->d[idx] > GESTURE_THOLD_OUT) &&
@@ -351,7 +385,7 @@ gesture_process_data(apds9960_t *p_apds)
             b_is_all_ok = true;
 
             // Find the last sample where all UDLR values are above Out threshold
-            for (idx = p_gdata->count - 1; idx >= 0; idx--)
+            for (idx = (uint8_t)(p_gdata->dset_count - 1); idx >= 0; idx--)
             {
                 if ((p_gdata->u[idx] > GESTURE_THOLD_OUT) &&
                     (p_gdata->d[idx] > GESTURE_THOLD_OUT) &&
@@ -366,6 +400,10 @@ gesture_process_data(apds9960_t *p_apds)
                 }
             }
         }
+        else
+        {
+            DEBUG("Some first values are zero, skipping.", __FUNCTION__);
+        }
     }
 
     if (b_is_all_ok)
@@ -376,13 +414,24 @@ gesture_process_data(apds9960_t *p_apds)
         ud_ratio_last = ((u_last - d_last) * 100) / (u_last + d_last);
         lr_ratio_last = ((l_last - r_last) * 100) / (l_last + r_last);
 
+        DEBUG("First: U:%d D:%d L:%d R:%d", __FUNCTION__,
+            u_first, d_first, l_first, r_first);
+        DEBUG("Last: U:%d D:%d L:%d R:%d", __FUNCTION__,
+            u_last, d_last, l_last, r_last);
+        DEBUG("Ratios: UD Fi/La:%d/%d LR Fi/La:%d/%d", __FUNCTION__, 
+            ud_ratio_first, ud_ratio_last, lr_ratio_first, lr_ratio_last);
+
         // Determine the difference between the first and last ratios
         ud_delta = ud_ratio_last - ud_ratio_first;
         lr_delta = lr_ratio_last - lr_ratio_first;
 
+        DEBUG("Deltas: UD:%d LR:%d", __FUNCTION__, ud_delta, lr_delta);
+
         // Accumulate the UD and LR delta values
         p_gdelta->ud += ud_delta;
         p_gdelta->lr += lr_delta;
+
+        DEBUG("Accu: UD:%d LR:%d", __FUNCTION__, p_gdelta->ud, p_gdelta->lr);
 
         // Determine UD gesture
         if (p_gdelta->ud >= GESTURE_SENS_1)
@@ -456,6 +505,14 @@ gesture_process_data(apds9960_t *p_apds)
                 }
             }
         }
+
+        DEBUG("Count: UD:%d LR:%d Near:%d Far:%d", __FUNCTION__,
+            p_gcount->ud, p_gcount->lr, p_gcount->near, p_gcount->far);
+    }
+
+    if (!b_is_all_ok)
+    {
+        DEBUG("Processing failed.\n", __FUNCTION__);
     }
 
     return b_is_all_ok;
@@ -553,6 +610,47 @@ gesture_decode(apds9960_t *p_apds)
         {
             b_is_decoded = false;
         }
+    }
+
+    if (b_is_decoded)
+    {
+        char result[32];
+
+        switch (p_apds->gesture_motion)
+        {
+        case GESTURE_DIR_UP:
+            strcpy(result, "Up");
+            break;
+
+        case GESTURE_DIR_DOWN:
+            strcpy(result, "Down");
+            break;
+
+        case GESTURE_DIR_LEFT:
+            strcpy(result, "Left");
+            break;
+
+        case GESTURE_DIR_RIGHT:
+            strcpy(result, "Right");
+            break;
+
+        case GESTURE_DIR_FAR:
+            strcpy(result, "Far");
+            break;
+
+        case GESTURE_DIR_NEAR:
+            strcpy(result, "Near");
+            break;
+
+        default:
+            strcpy(result, "Up");
+            break;
+        }
+        DEBUG("Decoding result: %s\n", __FUNCTION__, result);
+    }
+    else
+    {
+        DEBUG("Decoding failed\n", __FUNCTION__);
     }
 
     return b_is_decoded;
